@@ -8,7 +8,7 @@ function getMap() {
     var ne = bounds.getNorthEast();
 
     // Construct the URL with query parameters and a cache-busting timestamp
-    var url = `/map?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}&t=${Date.now()}`;
+    var url = `/map?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
 
     fetch(url).then(function(response) {
 

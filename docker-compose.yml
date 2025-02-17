@@ -1,6 +1,6 @@
 services:
   db:
-    build: ./backend/database
+    build: backend/db
     container_name: db
     environment:
       - POSTGRES_USER=${POSTGRES_USER}

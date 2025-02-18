@@ -24,6 +24,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     <span class="username-display">${user.username}</span>
                     <a href="#" id="account-popup-trigger" class="account-button">Account</a>
                 `;
+
+                // This was a pain, but adding the trigger immediately within the account area change works
+                const accountTrigger = document.getElementById('account-popup-trigger');
+                const accountPopup = document.getElementById('account-popup');
+                const closeAccountPopup = document.getElementById('close-account-popup');
+
+                accountTrigger.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    accountPopup.style.display = 'block';
+                });
+
+                closeAccountPopup.addEventListener("click", function () {
+                    accountPopup.style.display = 'none';
+                });
+
             } else {
                 accountArea.innerHTML = `
                     <a href="#" id="login-trigger" class="account-link">Log In</a>
@@ -43,23 +58,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
-const accountTrigger = document.getElementById('account-popup-trigger');
-const accountPopup = document.getElementById('account-popup');
-const closeAccountPopup = document.getElementById('close-account-popup');
-
-if (accountTrigger) {
-    accountTrigger.addEventListener("click", function (e) {
-        e.preventDefault();
-        accountPopup.style.display = 'block';
-    });
-}
-
-if (closeAccountPopup) {
-    closeAccountPopup.addEventListener("click", function () {
-        accountPopup.style.display = 'none';
-    });
-}
-
 const signupButton = document.getElementById('signup-button');
 
 if (signupButton) {
@@ -70,7 +68,6 @@ if (signupButton) {
         var signupURL = `/signup?email=${email}&password=${password}`;
         const response = await fetch(signupURL, { method: 'POST' });
 
-        // Validate this is correct methodology for JWT-auth
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('access_token', data.access_token);
@@ -87,10 +84,36 @@ if (signupButton) {
     });
 }
 
+const loginButton = document.getElementById('login-button');
+
+if (loginButton) {
+    loginButton.addEventListener("click", async function () {
+        var email = document.getElementById('login-email').value;
+        var password = document.getElementById('login-password').value;
+
+        var loginURL = `/login?email=${email}&password=${password}`;
+        const response = await fetch(loginURL, { method: 'POST' });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('access_token', data.access_token);
+            document.getElementById('login-popup').style.display = 'none';
+
+            // As before, easier to reload the page
+            location.reload();
+        } else {
+            const error = await response.text();
+            alert(error);
+        }
+    });
+}
+
+
 const logoutButton = document.getElementById('logout-button');
 
 if (logoutButton) {
     logoutButton.addEventListener("click", function () {
-        // TODO: Implement logout functionality
+        localStorage.removeItem('access_token');
+        location.reload();
     });
 }

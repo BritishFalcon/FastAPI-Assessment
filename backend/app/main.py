@@ -38,29 +38,7 @@ async def fetch_map(sw_lat: float = Query(...), sw_lon: float = Query(...),
     return Response(content=response.content, media_type="image/png", headers=response.headers)
 
 
-@app.post("/signup")
-async def register(email: str = Query(...), password: str = Query(...)):
-
-    params = {
-        "email": email,
-        "password": password
-    }
-
-    signup_url = f"{AUTH_URL}/auth/register"
-    response = requests.post(signup_url, json=params)
-
-    # TODO: Probably want to re-pack the response to be more user-friendly
-    if not response.ok:
-        content = response.json()
-        match response.status_code:
-            case 422:
-                error = content['detail'][0]['msg']
-            case 400:
-                error = content['detail']
-            case _:
-                error = "Undefined Error"
-        return Response(content=error, status_code=response.status_code)
-
+def _login(email: str, password: str):
     params = {
         "username": email,
         "password": password
@@ -82,6 +60,36 @@ async def register(email: str = Query(...), password: str = Query(...)):
         return Response(content=error, status_code=response.status_code)
 
     return Response(content=response.content, media_type="application/json", headers=response.headers)
+
+
+@app.post("/signup")
+async def register(email: str = Query(...), password: str = Query(...)):
+
+    params = {
+        "email": email,
+        "password": password
+    }
+
+    signup_url = f"{AUTH_URL}/auth/register"
+    response = requests.post(signup_url, json=params)
+
+    if not response.ok:
+        content = response.json()
+        match response.status_code:
+            case 422:
+                error = content['detail'][0]['msg']
+            case 400:
+                error = content['detail']
+            case _:
+                error = "Undefined Error"
+        return Response(content=error, status_code=response.status_code)
+
+    return _login(email, password)
+
+
+@app.post("/login")
+async def login(email: str = Query(...), password: str = Query(...)):
+    return _login(email, password)
 
 
 @app.get("/validate")

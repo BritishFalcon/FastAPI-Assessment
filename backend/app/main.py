@@ -1,9 +1,10 @@
+import asyncio
 import json
 import os
 import httpx
 import requests
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -12,6 +13,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__
 
 MAPPING_URL = os.getenv("MAPPING_URL")
 AUTH_URL = os.getenv("AUTH_URL")
+ADSB_URL = os.getenv("ADSB_URL")
 
 
 @app.get("/", response_class=FileResponse)
@@ -34,6 +36,13 @@ async def fetch_map(sw_lat: float = Query(...), sw_lon: float = Query(...),
 
     async with httpx.AsyncClient() as client:
         response = await client.get(MAPPING_URL, params=params)
+
+    adsb_params = {
+        "sw_lat": sw_lat,
+        "sw_lon": sw_lon,
+        "ne_lat": ne_lat,
+        "ne_lon": ne_lon
+    }
 
     return Response(content=response.content, media_type="image/png", headers=response.headers)
 
@@ -115,6 +124,30 @@ async def validate(token: str = Query(...)):
 
     return Response(content=response.content, media_type="application/json", headers=response.headers)
 
+
+@app.websocket("/ws/aircraft")
+async def aircraft_ws(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_text()
+            bounds = json.loads(data)
+
+            params = {
+                "sw_lat": bounds["sw_lat"],
+                "sw_lon": bounds["sw_lon"],
+                "ne_lat": bounds["ne_lat"],
+                "ne_lon": bounds["ne_lon"]
+            }
+
+            ac_data_url = f"{ADSB_URL}/radius"
+            response = requests.get(ac_data_url, params=params)
+            response_json = response.json()
+            # TODO: Repack JSON to simplify the data
+
+            await websocket.send_text(json.dumps(response_json))
+        except WebSocketDisconnect:
+            break
 
 if __name__ == "__main__":
     import uvicorn

@@ -84,12 +84,12 @@ if (signupButton) {
     });
 }
 
-const loginButton = document.getElementById('login-button');
+const loginButton = document.getElementById('leaflet-button');
 
 if (loginButton) {
     loginButton.addEventListener("click", async function () {
-        var email = document.getElementById('login-email').value;
-        var password = document.getElementById('login-password').value;
+        var email = document.getElementById('leaflet-email').value;
+        var password = document.getElementById('leaflet-password').value;
 
         var loginURL = `/login?email=${email}&password=${password}`;
         const response = await fetch(loginURL, { method: 'POST' });
@@ -97,7 +97,7 @@ if (loginButton) {
         if (response.ok) {
             const data = await response.json();
             localStorage.setItem('access_token', data.access_token);
-            document.getElementById('login-popup').style.display = 'none';
+            document.getElementById('leaflet-popup').style.display = 'none';
 
             // As before, easier to reload the page
             location.reload();

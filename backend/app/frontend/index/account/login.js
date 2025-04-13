@@ -1,13 +1,13 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const loginTrigger = document.getElementById('login-trigger');
+    const loginTrigger = document.getElementById('leaflet-trigger');
     const signupTrigger = document.getElementById('signup-trigger');
     const accountTrigger = document.getElementById('account-popup-trigger');
 
-    const loginPopup = document.getElementById('login-popup');
+    const loginPopup = document.getElementById('leaflet-popup');
     const signupPopup = document.getElementById('signup-popup');
     const accountPopup = document.getElementById('account-popup');
 
-    const closeLoginPopup = document.getElementById('close-login-popup');
+    const closeLoginPopup = document.getElementById('close-leaflet-popup');
     const closeSignupPopup = document.getElementById('close-signup-popup');
     const closeAccountPopup = document.getElementById('close-account-popup');
 

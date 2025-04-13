@@ -38,14 +38,13 @@ async def fetch_map(sw_lat: float = Query(...), sw_lon: float = Query(...),
         "ne_lon": ne_lon
     }
 
-    url = f"{MAPPING_URL}/map"
-    full_url = f"{url}?sw_lat={sw_lat}&sw_lon={sw_lon}&ne_lat={ne_lat}&ne_lon={ne_lon}"
-    print(f"Fetching map from: {full_url}")
-
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{MAPPING_URL}/map", params=params)
+        response = await client.get(MAPPING_URL, params=params)
 
-    return Response(content=response.content, media_type="image/png", headers=response.headers)
+    headers = dict(response.headers)
+    headers["Access-Control-Expose-Headers"] = "Extent"
+
+    return Response(content=response.content, media_type="image/png", headers=headers)
 
 
 def _login(email: str, password: str):

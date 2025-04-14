@@ -1,0 +1,116 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:13
+    restart: no
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    container_name: db
+
+  adsb:
+    build: ./adsb
+    restart: no
+    ports:
+      - "${ADSB_PORT}:${ADSB_PORT}"
+    environment:
+      - ADSB_PORT=${ADSB_PORT}
+    container_name: adsb
+
+  ai:
+    build: ./ai
+    restart: no
+    ports:
+      - "${AI_PORT}:${AI_PORT}"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_PORT=${AI_PORT}
+    container_name: ai
+
+  api:
+    build: ./api
+    restart: no
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      - API_PORT=${API_PORT}
+      - MAPPING_URL=http://mapping:${MAPPING_PORT}
+      - ADSB_URL=http://adsb:${ADSB_PORT}
+      - AUTH_URL=http://auth:${AUTH_PORT}
+      - NOTIFICATION_URL=http://notification:${NOTIFICATION_PORT}
+      - AI_URL=http://ai:${AI_PORT}
+    container_name: api
+
+  auth:
+    build: ./auth
+    restart: no
+    depends_on:
+      - db
+    ports:
+      - "${AUTH_PORT}:${AUTH_PORT}"
+    environment:
+      - AUTH_PORT=${AUTH_PORT}
+      - SECRET=${SECRET}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    container_name: auth
+
+  mapping:
+    build: ./mapping
+    restart: no
+    ports:
+      - "${MAPPING_PORT}:${MAPPING_PORT}"
+    environment:
+      - OSM_API_KEY=${OSM_API_KEY}
+      - MAPPING_PORT=${MAPPING_PORT}
+    container_name: mapping
+
+  notification:
+    build: ./notification
+    restart: no
+    depends_on:
+      - db
+    ports:
+      - "${NOTIFICATION_PORT}:${NOTIFICATION_PORT}"
+    environment:
+      - NOTIFICATION_PORT=${NOTIFICATION_PORT}
+    container_name: notification
+
+  app:
+    build: ./app_new
+    restart: no
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      - APP_PORT=${APP_PORT}
+      - API_ADDRESS=http://api:${API_PORT}
+    container_name: app
+
+  nginx:
+    build: ./nginx
+    restart: no
+    ports:
+      - "${NGINX_PORT}:80"
+    depends_on:
+      - adsb
+      - mapping
+      - auth
+      - api
+      - app
+      - ai
+      - notification
+    environment:
+      - ADSB_PORT=${ADSB_PORT}
+      - MAPPING_PORT=${MAPPING_PORT}
+      - AUTH_PORT=${AUTH_PORT}
+      - API_PORT=${API_PORT}
+      - APP_PORT=${APP_PORT}
+    container_name: nginx
+
+volumes:
+  pgdata:

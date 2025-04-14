@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncGenerator
 
 from fastapi import Depends
@@ -5,9 +6,8 @@ from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-# TODO: Change this to a real database URL
-# localhost:5432
-DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost/auth"
+DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost/auth")
+print(DATABASE_URL)
 
 
 class Base(DeclarativeBase):

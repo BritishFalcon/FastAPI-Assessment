@@ -1,14 +1,13 @@
-import asyncio
 import json
 import os
 import httpx
 import requests
 
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.testing.plugin.plugin_base import logging
+
+# TODO: Remove deprecated functions that have been offloaded via NGINX
 
 app = FastAPI()
 # app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "frontend", "index")), name="static")

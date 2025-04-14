@@ -4,7 +4,7 @@ import io
 from fastapi import FastAPI, Query
 from fastapi.responses import Response
 
-from .osm_stitcher import get_map, get_tile
+from osm_stitcher import get_map, get_tile
 
 OSM_API_KEY = os.getenv("OSM_API_KEY")
 
@@ -12,7 +12,7 @@ app = FastAPI()
 
 
 # This needs to be moved to WebSockets for real-time updates
-@app.get("/map")
+@app.get("/")
 # Async is NOT used here, as this ensures the function is offloaded to a separate thread due to the blocking nature
 # of this relatively slow and I/O-bound function.
 def fetch_map(sw_lat: float = Query(...), sw_lon: float = Query(...),

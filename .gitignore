@@ -1,3 +1,4 @@
 /debug/
-/backend/app_new/nextjs-frontend/.next/
-/backend/app_new/nextjs-frontend/node_modules/
+/backend/app_new/node_modules/
+/backend/app_new/.next/
+/backend/.env

@@ -94,9 +94,6 @@ def get_map(sw, ne, zoom=None, tile_size=512, API_KEY=None):
     sw_new = num2deg(start_x, start_y, zoom)
     ne_new = num2deg(end_x + 1, end_y + 1, zoom)
 
-    debug_dir = r"C:\Users\Ben\PycharmProjects\FastAPI Assessment\debug"
-    map_img.save(f"{debug_dir}/map.png")
-
     return map_img, (sw_new, ne_new)
 
 

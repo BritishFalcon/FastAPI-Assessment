@@ -1,0 +1,5 @@
+requests
+fastapi
+haversine
+cachetools
+uvicorn[standard]

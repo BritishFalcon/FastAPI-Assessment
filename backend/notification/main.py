@@ -1,11 +1,5 @@
-import os
-
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, FileResponse
 from fastapi.staticfiles import StaticFiles
 
-import openai
-
 app = FastAPI()
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")

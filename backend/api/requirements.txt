@@ -1,5 +1,4 @@
-fastapi
+httpx
 requests
-cachetools
-pillow
+fastapi
 uvicorn[standard]

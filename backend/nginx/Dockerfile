@@ -1,5 +1,9 @@
 FROM nginx:alpine
 
-COPY nginx.conf /etc/nginx/nginx.conf
+RUN apk add --no-cache gettext
 
-EXPOSE 80
+COPY nginx.conf /etc/nginx/nginx.conf.template
+
+CMD envsubst '$ADSB_PORT $MAPPING_PORT $AUTH_PORT $API_PORT $APP_PORT' \
+  < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && \
+  nginx -g 'daemon off;'

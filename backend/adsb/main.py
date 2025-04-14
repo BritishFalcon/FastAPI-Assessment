@@ -1,3 +1,4 @@
+import ast
 import json
 import asyncio
 import threading
@@ -94,41 +95,81 @@ async def fetch_radius(sw_lat: float = Query(...), sw_lon: float = Query(...),
 
 
 @app.get("/hex")
-async def fetch_hex(hex: str = Query(...)):
+async def fetch_hex(hex: str = Query(...), image: bool = Query(False)):
+
+    # TODO: Threading for the cache like before
+
+    hex_list = [h.strip() for h in hex.split(",") if h.strip()]
+    if not hex_list:
+        raise HTTPException(status_code=400, detail="No hex provided.")
+
+    if image and len(hex_list) > 1:
+        raise HTTPException(status_code=400, detail="Image only supported for a single hex.")
+
+    results = {}
+    missing = []
 
     with cache_lock:
-        if hex in hex_cache:
-            content = hex_cache[hex]
-        else:
-            cache_lock.release()
+        for h in hex_list:
+            if h in hex_cache:
+                results[h] = hex_cache[h]
+            else:
+                missing.append(h)
 
-            url = f"https://api.airplanes.live/v2/hex/{hex}"
-            aircraft_response = await adsb_request(url)
+    # Only use API for missing hexes
+    if missing:
+        url = f"https://api.airplanes.live/v2/hex/{','.join(missing)}"
+        aircraft_response = await adsb_request(url)
 
-            if aircraft_response.status_code != 200:
-                return HTTPException(status_code=aircraft_response.status_code, detail=aircraft_response.text)
+        if aircraft_response.status_code != 200:
+            raise HTTPException(status_code=aircraft_response.status_code, detail=aircraft_response.text)
 
-            try:
-                content = aircraft_response.json()["ac"][0]  # We only expect one aircraft, if more, discard.
-            except IndexError:
-                return HTTPException(status_code=404, detail="No aircraft found with that hex")
+        try:
+            new_data = aircraft_response.json()["ac"]
+        except (KeyError, IndexError):
+            raise HTTPException(status_code=404, detail="No aircraft found with the given hex values.")
+
+        for ac in new_data:
+            h = ac.get("hex")
+            if h:
+                with cache_lock:
+                    hex_cache[h] = ac
+                results[h] = ac
 
     values_to_keep = ["r", "t", "dbFlags", "gs", "ias", "tas", "desc", "alt_baro", "alt_geom", "seen"]
-    filtered_content = {key: content.get(key, None) for key in values_to_keep}
 
-    image_url = f"https://airport-data.com/api/ac_thumb.json?m={hex}"
-    image_response = await adsb_request(image_url)
+    # Maintains original format, easier for backward-compat with the frontend code
+    if len(hex_list) == 1:
+        hex_val = hex_list[0]
+        content = results.get(hex_val)
+        if not content:
+            raise HTTPException(status_code=404, detail="No aircraft found with that hex.")
 
-    if image_response.status_code == 200:
-        image_content = image_response.json()
-        try:
-            filtered_content["image"] = image_content["data"][0]["image"]
-        except (IndexError, KeyError):
-            filtered_content["image"] = None
-    else:
-        filtered_content["image"] = None
+        filtered_content = {key: content.get(key, None) for key in values_to_keep}
 
-    return Response(content=json.dumps(filtered_content), media_type="application/json")
+        if image:
+            image_url = f"https://airport-data.com/api/ac_thumb.json?m={hex_val}"
+            image_response = await adsb_request(image_url)
+
+            if image_response.status_code == 200:
+                try:
+                    filtered_content["image"] = image_response.json()["data"][0]["image"]
+                except (IndexError, KeyError):
+                    filtered_content["image"] = None
+            else:
+                filtered_content["image"] = None
+
+        return Response(content=json.dumps(filtered_content), media_type="application/json")
+
+    # Multiple hexes output
+    output = []
+    for h in hex_list:
+        if h in results:
+            ac = results[h]
+            output.append({key: ac.get(key, None) for key in values_to_keep})
+
+    return Response(content=json.dumps(output), media_type="application/json")
+
 
 if __name__ == "__main__":
     import uvicorn

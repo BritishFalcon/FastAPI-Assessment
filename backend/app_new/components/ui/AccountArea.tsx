@@ -1,23 +1,27 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import AccountPopup from '../popup/Account';
-import LoginPopup from '../popup/Login';
-import SignupPopup from '../popup/Signup';
-import '../Account.module.css';
+import Popup from 'reactjs-popup';
+import 'reactjs-popup/dist/index.css';
 
 export default function AccountArea() {
+  // Bootstrap the token from localStorage
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
   const [authChecked, setAuthChecked] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(!!token);
   const [username, setUsername] = useState('');
-  const [showAccountPopup, setShowAccountPopup] = useState(false);
-  const [showLoginPopup, setShowLoginPopup] = useState(false);
-  const [showSignupPopup, setShowSignupPopup] = useState(false);
 
-  // Run auth check only on client mount
+  // Manage which popup is open
+  const [popupType, setPopupType] = useState<'login' | 'signup' | 'account' | null>(null);
+
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+    // If a token exists, try to validate it
     if (token) {
-      fetch(`/validate?token=${token}`, { method: 'GET' })
+      fetch(`/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
         .then(async (response) => {
           if (response.ok) {
             const data = await response.json();
@@ -38,9 +42,8 @@ export default function AccountArea() {
     } else {
       setAuthChecked(true);
     }
-  }, []);
+  }, [token]);
 
-  // Until auth is checked, render a static placeholder that matches SSR
   if (!authChecked) {
     return (
       <div className="account">
@@ -51,81 +54,149 @@ export default function AccountArea() {
     );
   }
 
+  const openPopup = (type: 'login' | 'signup' | 'account') => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPopupType(type);
+  };
+
+  const closePopup = () => {
+    setPopupType(null);
+  };
+
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const loginURL = `/auth/login`;
+      const body = new URLSearchParams({ username: email, password }).toString();
+      const response = await fetch(loginURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body,
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        setLoggedIn(true);
+        setUsername(data.email);
+        closePopup();
+        window.location.reload();
+      } else {
+        const error = await response.text();
+        alert(error);
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+    }
+  };
+
+  const handleSignup = async (email: string, password: string) => {
+    try {
+      const signupURL = `/auth/register`;
+      const response = await fetch(signupURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('access_token', data.access_token);
+        setLoggedIn(true);
+        setUsername(data.email);
+        closePopup();
+        window.location.reload();
+      } else {
+        const error = await response.text();
+        alert(error);
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setLoggedIn(false);
+    setUsername('');
+    closePopup();
+  };
+
   return (
     <div className="account">
       {loggedIn ? (
         <>
           <span className="username-display">{username}</span>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowAccountPopup(true);
-            }}
-            className="account-button"
-          >
+          <a href="#" onClick={openPopup('account')} className="account-button">
             Account
           </a>
         </>
       ) : (
         <>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowLoginPopup(true);
-            }}
-            className="account-link"
-          >
+          <a href="#" onClick={openPopup('login')} className="account-link">
             Log In
           </a>
           <span className="separator">|</span>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setShowSignupPopup(true);
-            }}
-            className="account-link"
-          >
+          <a href="#" onClick={openPopup('signup')} className="account-link">
             Sign Up
           </a>
         </>
       )}
 
-      {showAccountPopup && loggedIn && (
-        <AccountPopup
-          onClose={() => setShowAccountPopup(false)}
-          onLogout={() => {
-            localStorage.removeItem('access_token');
-            setLoggedIn(false);
-            setUsername('');
-          }}
-          username={username}
-        />
-      )}
-      {showLoginPopup && !loggedIn && (
-        <LoginPopup
-          onClose={() => setShowLoginPopup(false)}
-          onLogin={(data) => {
-            localStorage.setItem('access_token', data.access_token);
-            setLoggedIn(true);
-            setUsername(data.email);
-            setShowLoginPopup(false);
-          }}
-        />
-      )}
-      {showSignupPopup && !loggedIn && (
-        <SignupPopup
-          onClose={() => setShowSignupPopup(false)}
-          onSignup={(data) => {
-            localStorage.setItem('access_token', data.access_token);
-            setLoggedIn(true);
-            setUsername(data.email);
-            setShowSignupPopup(false);
-          }}
-        />
-      )}
+      {/* Popup for Login */}
+      <Popup open={popupType === 'login'} onClose={closePopup} modal nested>
+        <div className="popup-content">
+          <span className="close" onClick={closePopup}>&times;</span>
+          <h2>Login</h2>
+          <LoginForm onLogin={handleLogin} />
+        </div>
+      </Popup>
+
+      {/* Popup for Signup */}
+      <Popup open={popupType === 'signup'} onClose={closePopup} modal nested>
+        <div className="popup-content">
+          <span className="close" onClick={closePopup}>&times;</span>
+          <h2>Sign Up</h2>
+          <SignupForm onSignup={handleSignup} />
+        </div>
+      </Popup>
+
+      {/* Popup for Account Details */}
+      <Popup open={popupType === 'account'} onClose={closePopup} modal nested>
+        <div className="popup-content">
+          <span className="close" onClick={closePopup}>&times;</span>
+          <h2>Account Details</h2>
+          <p className="popup-email">Username: {username}</p>
+          <button onClick={handleLogout}>Logout</button>
+        </div>
+      </Popup>
     </div>
+  );
+}
+
+// Minimal login form component
+function LoginForm({ onLogin }: { onLogin: (email: string, password: string) => void }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  return (
+    <>
+      <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button onClick={() => onLogin(email, password)}>Login</button>
+    </>
+  );
+}
+
+// Minimal signup form component
+function SignupForm({ onSignup }: { onSignup: (email: string, password: string) => void }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  return (
+    <>
+      <input type="text" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <button onClick={() => onSignup(email, password)}>Sign Up</button>
+    </>
   );
 }

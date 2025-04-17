@@ -2,3 +2,6 @@ fastapi
 openai
 uvicorn[standard]
 pydantic
+uuid
+aioredis
+sse-starlette

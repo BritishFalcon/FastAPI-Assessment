@@ -3,3 +3,4 @@ fastapi-users[sqlalchemy]
 uvicorn[standard]
 aiosqlite
 asyncpg
+starlette

@@ -8,7 +8,7 @@ from osm_stitcher import get_map, get_tile
 
 OSM_API_KEY = os.getenv("OSM_API_KEY")
 
-app = FastAPI()
+app = FastAPI(root_path="/map")
 
 
 # This needs to be moved to WebSockets for real-time updates

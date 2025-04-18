@@ -17,7 +17,7 @@ const Map = () => {
 
     const img = L.imageOverlay('', [[0, 0], [0, 0]]).addTo(map);
     const host_ip = window.location.hostname;
-    const ac_ws = new WebSocket(`ws://${host_ip}:8000/ws/aircraft`);
+    const ac_ws = new WebSocket(`/ws/aircraft`);
 
     const ac_icon_default = L.icon({ iconUrl: '/images/plane-icon-blue.png', iconSize: [32, 32], iconAnchor: [16, 16] });
     const ac_icon_hover = L.icon({ iconUrl: '/images/plane-icon-yellow.png', iconSize: [32, 32], iconAnchor: [16, 16] });
@@ -29,9 +29,8 @@ const Map = () => {
 
       const sw = bounds.getSouthWest();
       const ne = bounds.getNorthEast();
-      const url = `http://${host_ip}:8000/map?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`;
 
-      fetch(url)
+      fetch(`/map/?sw_lat=${sw.lat}&sw_lon=${sw.lng}&ne_lat=${ne.lat}&ne_lon=${ne.lng}`)
         .then((res) => {
           const extentHeader = res.headers.get("Extent");
           const parts = extentHeader.split(",").map(Number);
@@ -84,7 +83,7 @@ const Map = () => {
         ac_marker.on('mouseout', () => ac_marker.setIcon(ac_icon_default));
         ac_marker.on('click', (e) => {
           const hex = e.target.hex;
-          fetch(`http://${host_ip}:8000/hex?hex=${hex}&image=true`)
+          fetch(`/adsb/hex?hex=${hex}&image=true`)
             .then((res) => res.json())
             .then((data) => {
               let details = '';

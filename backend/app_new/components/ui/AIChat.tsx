@@ -15,7 +15,7 @@ export default function AIChat() {
   const fetchBalance = async () => {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      const res = await fetch('http://localhost:8004/balance', {
+      const res = await fetch('/auth/balance', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -59,7 +59,7 @@ export default function AIChat() {
     const ne = bounds.getNorthEast();
 
     try {
-      const res = await fetch('http://127.0.0.1:8002/summary', {
+      const res = await fetch('/ai/summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ export default function AIChat() {
       const { job_id, remaining_credits } = await res.json();
       setTokenBalance(remaining_credits);
 
-      const result_event = new EventSource(`http://${window.location.hostname}/ai/stream/${job_id}`);
+      const result_event = new EventSource(`/ai/stream/${job_id}`);
       result_event.onmessage = (event) => {
         console.log('EventSource message:', event.data);
         const { message } = JSON.parse(event.data);

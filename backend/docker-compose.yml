@@ -44,12 +44,9 @@ services:
     ports:
       - "${API_PORT}:${API_PORT}"
     environment:
-      - API_PORT=${API_PORT}
-      - MAPPING_URL=http://mapping:${MAPPING_PORT}
       - ADSB_URL=http://adsb:${ADSB_PORT}
-      - AUTH_URL=http://auth:${AUTH_PORT}
-      - NOTIFICATION_URL=http://notification:${NOTIFICATION_PORT}
-      - AI_URL=http://ai:${AI_PORT}
+    depends_on:
+      - adsb
     container_name: api
 
   auth:

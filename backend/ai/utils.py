@@ -12,6 +12,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 MAPPING_PORT = os.getenv("MAPPING_PORT", "8006")
 ADSB_PORT = os.getenv("ADSB_PORT", "8001")
 NOTIFICATIONS_PORT = os.getenv("NOTIFICATIONS_PORT", "8003")
+EMAILS_ENABLED = os.getenv("EMAILS_ENABLED", "false").lower() == "true"
+print(f"EMAILS_ENABLED: {EMAILS_ENABLED}")
 REDIS_URL = "redis://redis:6379"
 MODEL = "gpt-4.1-mini"
 
@@ -118,8 +120,8 @@ async def get_summary(
 
 
 async def queue_worker():
-    async with httpx.AsyncClient() as http_client:
-        while True:
+    while True:
+        try:
             _, job = await redis.blpop("ai_queue")
             job = json.loads(job)
             job_id = job["job_id"]
@@ -139,23 +141,32 @@ async def queue_worker():
                 result = None
 
             print("Finished job:", job_id)
+            print("Result:", result)
 
             channel = f"job_{job_id}"
             payload = {"message": result}
             await redis.publish(channel, json.dumps(payload))
 
-            # TODO: Send email notification
-
-            """
-            await http_client.post(
-                url=f"http://notifications:{NOTIFICATIONS_PORT}/notify",
-                json={
-                    "job_id": job_id,
-                    "result": result,
-                    "request": job_data["request"],
-                }
-            )
-            """
+            if EMAILS_ENABLED:
+                async with httpx.AsyncClient() as http_client:
+                    print("Sending email notification!")
+                    await http_client.post(
+                        url=f"http://notification:{NOTIFICATIONS_PORT}/internal/notify",
+                        json={
+                            "to": job["email"],
+                            "notification_type": "ai_response",
+                            "params": {
+                                "ai_response": result,
+                            }
+                        }
+                    )
+        except Exception as e:
+            import traceback, sys
+            traceback.print_exc(file=sys.stdout)
+            try:
+                print(">>> job payload:", job)
+            except NameError:
+                print(">>> job payload not available")
 
 
 async def event_generator(job_id: str):

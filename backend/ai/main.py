@@ -10,7 +10,7 @@ from schemas import RequestBase
 from sse_starlette.sse import EventSourceResponse
 
 from utils import *
-from db import get_current_user_id
+from db import get_current_user_info
 
 
 @asynccontextmanager
@@ -32,7 +32,7 @@ app.add_middleware(
 @app.post("/summary")
 async def enqueue_summary(data: RequestBase, request: Request):
 
-    user_id = await get_current_user_id(request)
+    user_id, user_email = await get_current_user_info(request)
     credit_result = await deduct_credits(user_id, 25)
 
     job_id = str(uuid.uuid4())
@@ -44,9 +44,10 @@ async def enqueue_summary(data: RequestBase, request: Request):
         "ne_lon": data.ne_lon,
         "question": data.question,
         "user_id": user_id,
+        "email": user_email
     }))
 
-    print(f"Enqueued job {job_id} for user {user_id}")
+    print(f"Enqueued job {job_id} for user {user_id} ({user_email})")
 
     return JSONResponse(status_code=202, content={
         "job_id": f"{job_id}",

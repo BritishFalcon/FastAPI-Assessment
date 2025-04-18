@@ -24,7 +24,7 @@ async def deduct_credits(
     return response.json()
 
 
-async def get_current_user_id(
+async def get_current_user_info(
     request: Request,
 ):
     auth_header = request.headers.get("Authorization")
@@ -45,4 +45,5 @@ async def get_current_user_id(
             detail=response.text,
         )
 
-    return response.json()["id"]
+    user_info = response.json()
+    return user_info["id"], user_info["email"]

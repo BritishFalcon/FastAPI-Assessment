@@ -1,2 +1,5 @@
 fastapi
 uvicorn[standard]
+pydantic[email]
+aiosmtplib
+jinja2

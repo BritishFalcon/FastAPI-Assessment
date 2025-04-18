@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from db import User, create_db_and_tables, get_async_session
+from db import User, create_db_and_tables, get_async_session, Usage
 from schemas import UserCreate, UserRead, UserUpdate
 from users import auth_backend, current_active_user, fastapi_users
 from private import InternalOnlyMiddleware
@@ -65,9 +65,20 @@ app.include_router(
 )
 
 
-@app.get("/authenticated-route")
-async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+@app.get("/usage")
+async def get_usage(
+        user: User = Depends(current_active_user),
+        session: AsyncSession = Depends(get_async_session)
+):
+    result = await session.execute(
+        select(Usage).where(Usage.user_id == user.id)
+    )
+    usage = result.scalars().all()
+
+    if not usage:
+        raise HTTPException(status_code=404, detail="No usage found")
+
+    return usage
 
 
 private = FastAPI(lifespan=lifespan)
@@ -82,7 +93,8 @@ class CreditUse(BaseModel):
 @private.post("/use-credits")
 async def use_credits(
         data: CreditUse,
-        session: AsyncSession = Depends(get_async_session)
+        session: AsyncSession = Depends(get_async_session),
+        note: str = "credits_used"
 ):
     credits = data.credits
     user_id = data.user_id
@@ -101,6 +113,13 @@ async def use_credits(
 
     user.credits -= credits
     session.add(user)
+
+    usage = Usage(
+        user_id=user.id,
+        credit_change=-credits,
+        note=note
+    )
+    session.add(usage)
     await session.commit()
 
     return {

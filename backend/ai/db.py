@@ -11,7 +11,7 @@ async def deduct_credits(
 
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            "http://auth:8004/auth/internal/use-credits",
+            "http://auth/auth/internal/use-credits",
             json={"credits": credits, "user_id": user_id},
         )
 
@@ -35,7 +35,7 @@ async def get_current_user_info(
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            "http://auth:8004/auth/me",
+            "http://auth/auth/me",
             headers={"Authorization": f"Bearer {bearer_token}"},
         )
 

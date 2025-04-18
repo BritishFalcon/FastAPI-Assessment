@@ -19,8 +19,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ADSB_URL = os.getenv("ADSB_URL", "http://localhost:8001")
-
 
 @app.websocket("/ws/aircraft")
 async def aircraft_ws(websocket: WebSocket):
@@ -37,7 +35,7 @@ async def aircraft_ws(websocket: WebSocket):
                 "ne_lon": bounds["ne_lon"]
             }
 
-            ac_data_url = f"{ADSB_URL}/radius"
+            ac_data_url = f"http://adsb/radius"
             response = requests.get(ac_data_url, params=params)
             response_json = response.json()
             # TODO: Repack JSON to simplify the data

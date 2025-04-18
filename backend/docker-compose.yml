@@ -17,20 +17,13 @@ services:
   adsb:
     build: ./adsb
     restart: no
-    ports:
-      - "${ADSB_PORT}:${ADSB_PORT}"
-    environment:
-      - ADSB_PORT=${ADSB_PORT}
     container_name: adsb
 
   ai:
     build: ./ai
     restart: no
-    ports:
-      - "${AI_PORT}:${AI_PORT}"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - AI_PORT=${AI_PORT}
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - EMAILS_ENABLED=${EMAILS_ENABLED}
     depends_on:
@@ -41,10 +34,8 @@ services:
   api:
     build: ./api
     restart: no
-    ports:
-      - "${API_PORT}:${API_PORT}"
     environment:
-      - ADSB_URL=http://adsb:${ADSB_PORT}
+      - ADSB_URL=http://adsb:8080
     depends_on:
       - adsb
     container_name: api
@@ -54,10 +45,7 @@ services:
     restart: no
     depends_on:
       - db
-    ports:
-      - "${AUTH_PORT}:${AUTH_PORT}"
     environment:
-      - AUTH_PORT=${AUTH_PORT}
       - SECRET=${SECRET}
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     container_name: auth
@@ -65,11 +53,8 @@ services:
   mapping:
     build: ./mapping
     restart: no
-    ports:
-      - "${MAPPING_PORT}:${MAPPING_PORT}"
     environment:
       - OSM_API_KEY=${OSM_API_KEY}
-      - MAPPING_PORT=${MAPPING_PORT}
     container_name: mapping
 
   notification:
@@ -77,10 +62,7 @@ services:
     restart: no
     depends_on:
       - db
-    ports:
-      - "${NOTIFICATION_PORT}:${NOTIFICATION_PORT}"
     environment:
-      - NOTIFICATION_PORT=${NOTIFICATION_PORT}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
@@ -91,11 +73,6 @@ services:
   app:
     build: ./app_new
     restart: no
-    ports:
-      - "${APP_PORT}:${APP_PORT}"
-    environment:
-      - APP_PORT=${APP_PORT}
-      - API_ADDRESS=http://api:${API_PORT}
     container_name: app
 
   nginx:
@@ -123,7 +100,7 @@ services:
   redis:
     # Remove in prod
     ports:
-        - "6379:6379"
+        - "${REDIS_PORT}:6379"
     image: redis:latest
     container_name: redis
 

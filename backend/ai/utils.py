@@ -9,11 +9,7 @@ from db import deduct_credits
 from openai import AsyncClient as OpenAI
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-MAPPING_PORT = os.getenv("MAPPING_PORT", "8006")
-ADSB_PORT = os.getenv("ADSB_PORT", "8001")
-NOTIFICATIONS_PORT = os.getenv("NOTIFICATIONS_PORT", "8003")
 EMAILS_ENABLED = os.getenv("EMAILS_ENABLED", "false").lower() == "true"
-print(f"EMAILS_ENABLED: {EMAILS_ENABLED}")
 REDIS_URL = "redis://redis:6379"
 MODEL = "gpt-4.1-mini"
 
@@ -43,14 +39,14 @@ async def get_summary(
         ne_lon: float,
 ):
 
-    aircraft_url = f"http://adsb:{ADSB_PORT}/radius?sw_lat={sw_lat}&sw_lon={sw_lon}&ne_lat={ne_lat}&ne_lon={ne_lon}"
+    aircraft_url = f"http://adsb/radius?sw_lat={sw_lat}&sw_lon={sw_lon}&ne_lat={ne_lat}&ne_lon={ne_lon}"
     aircraft = await fetch_json(aircraft_url)
 
     if not aircraft:
         print("No aircraft data found.")
         return "There are no aircraft in the area."
 
-    image_url = f"http://mapping:{MAPPING_PORT}/?sw_lat={sw_lat}&sw_lon={sw_lon}&ne_lat={ne_lat}&ne_lon={ne_lon}"
+    image_url = f"http://mapping/?sw_lat={sw_lat}&sw_lon={sw_lon}&ne_lat={ne_lat}&ne_lon={ne_lon}"
     image = await fetch_image(image_url)
 
     context = [
@@ -101,7 +97,7 @@ async def get_summary(
         args = json.loads(tool_call.arguments)
         hex_number = args["hex"]
 
-        hex_url = f"http://adsb:{ADSB_PORT}/hex?hex={hex_number}"
+        hex_url = f"http://adsb/hex?hex={hex_number}"
         aircraft_info = await fetch_json(hex_url)
 
         context.append(tool_call)
@@ -151,7 +147,7 @@ async def queue_worker():
                 async with httpx.AsyncClient() as http_client:
                     print("Sending email notification!")
                     await http_client.post(
-                        url=f"http://notification:{NOTIFICATIONS_PORT}/internal/notify",
+                        url=f"http://notification/internal/notify",
                         json={
                             "to": job["email"],
                             "notification_type": "ai_response",

@@ -8,6 +8,6 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 RUN apt-get update && apt-get install -y postgresql-client
 RUN chmod +x /auth/wait-for-it.sh /auth/start.sh
 
-EXPOSE ${AUTH_PORT}
+EXPOSE 80
 
 CMD ["/auth/start.sh"]

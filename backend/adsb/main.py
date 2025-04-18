@@ -18,8 +18,6 @@ app = FastAPI()
 rate_limit_lock = asyncio.Lock()
 last_request_time = 0
 
-# TODO: Retain information about adsb for later use in a LRU cache
-
 hex_cache = LRUCache(maxsize=16000)
 cache_lock = threading.Lock()
 
@@ -32,16 +30,14 @@ def update_cache(aircraft):
 # airplanes.live has a 1 request per second rate limit, so this will wait for 1 second between requests
 async def adsb_request(url: str, delay: float = 1.0):
     global last_request_time
-
-    # TODO: Make this more complex to maybe take the latest from each user to avoid too much zooming causing issue
-
     async with rate_limit_lock:
         while True:
             current_time = asyncio.get_event_loop().time()
             if current_time - last_request_time > delay:
                 last_request_time = current_time
                 return requests.get(url)
-            await asyncio.sleep(0.1)
+            else:
+                await asyncio.sleep(delay - (current_time - last_request_time))
 
 
 @app.get("/radius")
@@ -96,8 +92,6 @@ async def fetch_radius(sw_lat: float = Query(...), sw_lon: float = Query(...),
 
 @app.get("/hex")
 async def fetch_hex(hex: str = Query(...), image: bool = Query(False)):
-
-    # TODO: Threading for the cache like before
 
     hex_list = [h.strip() for h in hex.split(",") if h.strip()]
     if not hex_list:

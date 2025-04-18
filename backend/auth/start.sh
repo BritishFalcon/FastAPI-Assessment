@@ -19,4 +19,4 @@ until pg_isready -h db -p 5432 -U "$POSTGRES_USER"; do
 done
 
 echo "Starting FastAPI with uvicorn..."
-exec uvicorn app:app --host 0.0.0.0 --port "$AUTH_PORT"
+exec uvicorn app:app --host 0.0.0.0 --port 80

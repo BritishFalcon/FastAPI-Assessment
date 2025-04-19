@@ -102,7 +102,7 @@ const Map = () => {
                   .then(r => r.json())
                   .then(data => {
                     if (data.image) {
-                      const img = `<img src="${data.image}" alt="Aircraft Image" style="width: 100px; height: auto;">`;
+                      const img = `<img src="${data.image}" alt="Aircraft Image" style="width: 200px; height: auto;">`;
                       popup.setContent(img + details);
                       popup.update();
                     }

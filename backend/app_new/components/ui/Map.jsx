@@ -83,23 +83,31 @@ const Map = () => {
         ac_marker.on('mouseout', () => ac_marker.setIcon(ac_icon_default));
         ac_marker.on('click', (e) => {
           const hex = e.target.hex;
-          fetch(`/adsb/hex?hex=${hex}&image=true`)
+          fetch(`/adsb/hex?hex=${hex}`)
             .then((res) => res.json())
             .then((data) => {
               let details = '';
-              if (data.image) {
-                details += `<img src="${data.image}" alt="Aircraft image" style="max-width:100%; display:block; margin-bottom:10px;">`;
-              }
               for (let key in data) {
-                if (key === 'image' || data[key] == null) continue;
+                if (data[key] == null) continue;
                 details += `<strong>${key}:</strong> ${data[key]}<br>`;
               }
-              details += `<a href="/hex/${hex}" target="_blank">More details</a>`;
-              L.popup({ offset: L.point(0, -50), autoPan: true })
-                .setLatLng(e.latlng)
-                .setContent(details)
-                .openOn(map);
-            });
+
+              const popup = L.popup({offset: L.point(0, -50), autoPan: true})
+                  .setLatLng(e.latlng)
+                  .setContent(details)
+                  .openOn(map);
+
+              // Doing this separately, getting image via API is just too slow for a usable UX
+              fetch(`/adsb/hex?hex=${hex}&image=true`)
+                  .then(r => r.json())
+                  .then(data => {
+                    if (data.image) {
+                      const img = `<img src="${data.image}" alt="Aircraft Image" style="width: 100px; height: auto;">`;
+                      popup.setContent(img + details);
+                      popup.update();
+                    }
+                  });
+              });
         });
 
         ac_instances.push({ marker: ac_marker, label: label_marker });

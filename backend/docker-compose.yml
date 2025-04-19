@@ -88,17 +88,9 @@ services:
       - app
       - ai
       - notification
-    environment:
-      - ADSB_PORT=${ADSB_PORT}
-      - MAPPING_PORT=${MAPPING_PORT}
-      - AUTH_PORT=${AUTH_PORT}
-      - API_PORT=${API_PORT}
-      - APP_PORT=${APP_PORT}
-      - AI_PORT=${AI_PORT}
     container_name: nginx
 
   redis:
-    # Remove in prod
     ports:
         - "${REDIS_PORT}:6379"
     image: redis:latest

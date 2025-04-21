@@ -2,7 +2,7 @@ import base64
 import json
 import os
 
-import aioredis
+from redis import asyncio as aioredis
 import httpx
 from db import deduct_credits
 

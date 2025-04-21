@@ -3,5 +3,6 @@ openai
 uvicorn[standard]
 pydantic
 uuid
-aioredis
+hiredis==3.0.0
+redis==5.0.8
 sse-starlette

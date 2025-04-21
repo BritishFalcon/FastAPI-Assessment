@@ -1,4 +1,3 @@
-import ast
 import json
 import asyncio
 import threading
@@ -12,7 +11,7 @@ from haversine import haversine, Unit
 
 from cachetools import LRUCache
 
-app = FastAPI()
+app = FastAPI(root_path="/adsb")
 
 # ADSB source has a 1 per second rate limit, so globally delay requests to avoid being blocked
 rate_limit_lock = asyncio.Lock()
@@ -52,8 +51,7 @@ async def fetch_radius(sw_lat: float = Query(...), sw_lon: float = Query(...),
     aircraft_response = await adsb_request(url)
 
     if aircraft_response.status_code != 200:
-        print(f"ERROR: {aircraft_response.status_code} - {aircraft_response.text}")
-        return HTTPException(status_code=aircraft_response.status_code, detail=aircraft_response.text)
+        raise HTTPException(status_code=aircraft_response.status_code, detail=aircraft_response.text)
 
     content = aircraft_response.json()
 
@@ -75,10 +73,14 @@ async def fetch_radius(sw_lat: float = Query(...), sw_lon: float = Query(...),
         flight = aircraft["flight"] if "flight" in aircraft else "N/A"
 
         try:
+            # Expecting a KeyError and skip here if there really is no data
+            lat = aircraft["lat"] if "lat" in aircraft else aircraft["lastPosition"]["lat"]
+            lon = aircraft["lon"] if "lon" in aircraft else aircraft["lastPosition"]["lon"]
+
             subset = {
                 "hex": aircraft["hex"],
-                "lat": aircraft["lat"],
-                "lon": aircraft["lon"],
+                "lat": lat,
+                "lon": lon,
                 "track": track,
                 "flight": flight,
             }

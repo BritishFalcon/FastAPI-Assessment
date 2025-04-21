@@ -11,7 +11,6 @@ OSM_API_KEY = os.getenv("OSM_API_KEY")
 app = FastAPI(root_path="/map")
 
 
-# This needs to be moved to WebSockets for real-time updates
 @app.get("/")
 # Async is NOT used here, as this ensures the function is offloaded to a separate thread due to the blocking nature
 # of this relatively slow and I/O-bound function.

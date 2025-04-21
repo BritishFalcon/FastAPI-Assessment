@@ -7,6 +7,7 @@ from email.message import EmailMessage
 import aiosmtplib
 from jinja2 import Template
 
+from private import InternalOnlyMiddleware
 from templates import *
 
 SMTP_HOST = os.getenv("SMTP_HOST")
@@ -23,6 +24,7 @@ class NotifyRequest(BaseModel):
 
 
 app = FastAPI(root_path="/notification")
+app.add_middleware(InternalOnlyMiddleware)
 
 
 async def send_email(to: str, subject: str, html: str):

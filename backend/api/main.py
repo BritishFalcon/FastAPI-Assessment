@@ -1,10 +1,7 @@
 import json
-import os
-import httpx
 import requests
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 # TODO: Remove deprecated functions that have been offloaded via NGINX
@@ -38,9 +35,8 @@ async def aircraft_ws(websocket: WebSocket):
             ac_data_url = f"http://adsb/radius"
             response = requests.get(ac_data_url, params=params)
             response_json = response.json()
-            # TODO: Repack JSON to simplify the data
-
             await websocket.send_text(json.dumps(response_json))
+            
         except WebSocketDisconnect:
             break
 

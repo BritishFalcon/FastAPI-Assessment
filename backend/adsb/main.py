@@ -23,7 +23,8 @@ cache_lock = threading.Lock()
 
 def update_cache(aircraft):
     with cache_lock:
-        hex_cache.update({aircraft["hex"]: aircraft})
+        pass
+        # hex_cache.update({aircraft["hex"]: aircraft})
 
 
 # airplanes.live has a 1 request per second rate limit, so this will wait for 1 second between requests
@@ -129,7 +130,8 @@ async def fetch_hex(hex: str = Query(...), image: bool = Query(False)):
             h = ac.get("hex")
             if h:
                 with cache_lock:
-                    hex_cache[h] = ac
+                    pass
+                    # hex_cache[h] = ac
                 results[h] = ac
 
     values_to_keep = ["r", "t", "dbFlags", "gs", "ias", "tas", "desc", "alt_baro", "alt_geom", "seen"]

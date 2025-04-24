@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -51,6 +52,7 @@ app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
     tags=["auth"],
 )
+"""
 app.include_router(
     fastapi_users.get_reset_password_router(),
     tags=["auth"],
@@ -59,10 +61,33 @@ app.include_router(
     fastapi_users.get_verify_router(UserRead),
     tags=["auth"],
 )
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    tags=["users"],
-)
+"""
+
+
+def strip_routes(router, to_remove: list[tuple[str, set[str]]]):
+    def should_keep(route: APIRoute):
+        for path, methods in to_remove:
+            if route.path == path and route.methods & methods:
+                return False
+        return True
+
+    router.routes = [
+        route for route in router.routes
+        if isinstance(route, APIRoute) and should_keep(route)
+    ]
+    return router
+
+
+users_router = fastapi_users.get_users_router(UserRead, UserUpdate)
+
+routes_to_strip = [
+    ("/{id}", {"GET", "DELETE", "PATCH"}),
+    ("/me", {"PATCH"}),
+]
+
+users_router = strip_routes(users_router, routes_to_strip)
+
+app.include_router(users_router)
 
 
 @app.get("/usage")

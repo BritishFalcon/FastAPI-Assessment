@@ -9,13 +9,6 @@ export default function Header() {
       <div className="header-left">
         <h1>FastAPI Aviation Map</h1>
       </div>
-      <div className="header-center">
-        <input
-          type="text"
-          className="search-bar"
-          placeholder="Search for flights, airports..."
-        />
-      </div>
       <div className="header-right">
         <AccountArea />
       </div>

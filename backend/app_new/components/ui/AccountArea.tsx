@@ -129,17 +129,17 @@ export default function AccountArea() {
         <>
           <span className="username-display">{username}</span>
           <a href="#" onClick={openPopup('account')} className="account-button">
-            Account
+            &nbsp;Account
           </a>
         </>
       ) : (
         <>
           <a href="#" onClick={openPopup('login')} className="account-link">
-            Log In
+            &nbsp;Log In&nbsp;
           </a>
           <span className="separator">|</span>
           <a href="#" onClick={openPopup('signup')} className="account-link">
-            Sign Up
+            &nbsp;Sign Up
           </a>
         </>
       )}
